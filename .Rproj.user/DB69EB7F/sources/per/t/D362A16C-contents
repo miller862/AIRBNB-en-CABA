@@ -1,0 +1,170 @@
+#Clase Mapas
+
+library(tidyverse)
+library(readxl)
+
+#Para trabajar con datos geo
+install.packages("sf")
+library(sf)
+
+install.packages("rgdal")
+library(rgdal)
+
+#Para leer geojson
+install.packages("geojsonsf")
+library(geojsonsf)
+# install.packages("geojsonio", dependencies = TRUE)
+# library(geojsonio)
+
+#data geo 
+install.packages("geoAr")
+library(geoAr)
+#Mapas! 
+
+library(ggmap)
+library(ggrepel)
+# para evitar la notacion cientifica en numeros grandes
+options(scipen = 999)
+
+
+raw_escuelas <- read_xlsx("data/base_edificios.xlsx") %>% 
+  glimpse()
+
+
+min(raw_escuelas$Lon)
+max(raw_escuelas$Lat)
+
+#Escuelas caba (en discord)
+
+clean_escuelas <- raw_escuelas %>% 
+  janitor::clean_names() %>% 
+  drop_na(lon,lat) %>%
+  
+  mutate(lon = str_replace(string = lon, pattern = ",", replacement = "."), 
+         lat = str_replace(string =lat, pattern = ",", replacement = ".")) %>% 
+  
+  mutate(lon = as.double(lon), 
+         lat = as.double(lat)) %>% 
+  # mutate(lon = as.numeric(lon), 
+  #        lat = as.numeric(lat)) %>% 
+  glimpse()
+
+
+min(clean_escuelas$lon)
+max(clean_escuelas$lon)
+max(clean_escuelas$lat)
+
+#MAPA 1
+mapa1 <- qmplot(x = lon, y = lat, data = clean_escuelas, maptype = "toner-lite")
+mapa1
+
+#creo una carpeta
+dir.create("output")
+
+#Guardo el mapa
+ggsave(plot = mapa1, filename = "output/mapa_escuelas_caba.png", 
+       width = 20, height = 20, units = "cm")
+
+#Genero data geografica
+sf_escuelas <- clean_escuelas %>% 
+  st_as_sf(coords = c("lon", "lat")) %>% 
+  glimpse()
+
+print(sf_escuelas)
+st_crs(sf_escuelas)
+
+# st_crs(sf_escuelas) <- 4326
+
+escuelas <- sf_escuelas %>% 
+  st_set_crs(value = 4326) %>% 
+  print()
+
+st_crs(escuelas)
+
+
+sf_escuelas_5348 <- escuelas %>% 
+  st_transform(crs = 5348) %>% 
+  print()
+
+st_crs(sf_escuelas_5348)
+
+#Creo la carpeta y guardo el archivo
+dir.create("data/base_edificios")
+write_sf(escuelas, "data/base_edificios/base_edificios.shp")
+
+read_sf("data/base_edificios/base_edificios.shp")
+#Informacion censal 
+
+raw_censo <- geojson_sf("https://cdn.buenosaires.gob.ar/datosabiertos/datasets/direccion-general-de-estadisticas-y-censos/informacion-censal-por-radio/caba_radios_censales.geojson") %>% 
+  glimpse()
+
+st_crs(raw_censo)
+
+glimpse(raw_censo)
+
+#MAPA!
+mapa3 <- ggplot() +
+  geom_sf(data = raw_censo)
+
+mapa3
+
+#Filtro data comuna 1
+comuna1 <- raw_censo %>%
+  janitor::clean_names() %>% 
+  filter(comuna == "1") %>% 
+  mutate(total_pob = as.numeric(total_pob)) %>% 
+  
+  #Limpieza
+  mutate(comuna = str_pad(comuna, width = 3,side = "left", pad = "0"), 
+         fraccion = str_pad(fraccion, width = 2, side = "left", pad = "0"), 
+         radio = str_pad(radio, width = 2, side = "left", pad = "0")) %>% 
+  mutate(id_radio = paste0(comuna,fraccion,radio)) %>% 
+  select(-c(comuna,fraccion,radio,co_frac_ra,wkt)) %>% 
+  glimpse()
+
+mapa4 <- ggplot(data = comuna1) +
+  geom_sf(aes(fill = total_pob))+
+  
+  geom_text_repel(aes(label = total_pob, geometry = geometry),
+                  stat = "sf_coordinates",
+                  min.segment.length = 0)
+  
+mapa4
+
+#Ahora quiero cruzarlo con escuelas
+
+#Antes voy a reducir la cantidad de puntos. 
+#Escuela != Edificio
+
+edificios <- escuelas %>% 
+  distinct(domicilio_edificio, .keep_all = TRUE) %>% 
+  glimpse()
+
+
+#ST JOIN ####
+escuelasxradio <- comuna1 %>% 
+  st_join(edificios,left = TRUE) %>%
+  drop_na(domicilio_edificio) %>%
+  # select(-geometry) %>%
+  st_drop_geometry() %>%
+  #Calculo
+  group_by(id_radio) %>% 
+  summarise(n_escuelas = n()) %>% 
+  glimpse()
+
+
+geo_exr <- comuna1 %>% 
+  left_join(escuelasxradio, by = "id_radio") %>% 
+  glimpse()
+
+mapa5 <- ggplot() + 
+  geom_sf(data = geo_exr, aes(fill = n_escuelas)) + 
+  scale_fill_continuous(
+    low = "thistle2",
+    high = "darkred",
+    guide = "colorbar",
+    na.value = "transparent"
+  ) + 
+  theme_void()
+
+mapa5

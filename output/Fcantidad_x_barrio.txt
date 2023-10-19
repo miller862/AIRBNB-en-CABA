@@ -1,0 +1,53 @@
+
+=============================
+     neighbourhood   cantidad
+-----------------------------
+1       palermo       7,255  
+2      recoleta       3,158  
+3     san nicolas     1,195  
+4      belgrano       1,060  
+5       retiro        1,055  
+6      monserrat       700   
+7       almagro        657   
+8    villa crespo      627   
+9      balvanera       549   
+10     san telmo       520   
+11    colegiales       494   
+12       nuñez         464   
+13     caballito       371   
+14     chacarita       310   
+15   puerto madero     268   
+16   villa urquiza     240   
+17   constitucion      233   
+18     saavedra        148   
+19     barracas        129   
+20   san cristobal      86   
+21      flores          81   
+22      coghlan         73   
+23   villa ortuzar      64   
+24   villa devoto       63   
+25       boedo          52   
+26 villa del parque     51   
+27       boca           46   
+28 parque chacabuco     43   
+29 villa pueyrredon     42   
+30 parque patricios     38   
+31    parque chas       35   
+32     agronomia        28   
+33 villa santa rita     27   
+34     paternal         22   
+35     floresta         17   
+36 villa gral. mitre    17   
+37    villa luro        15   
+38     mataderos        13   
+39      liniers         12   
+40    villa real        7    
+41   monte castro       6    
+42  velez sarsfield     6    
+43   nueva pompeya      6    
+44 parque avellaneda    4    
+45  villa riachuelo     1    
+46     versalles        1    
+47   villa lugano            
+48   villa soldati           
+-----------------------------

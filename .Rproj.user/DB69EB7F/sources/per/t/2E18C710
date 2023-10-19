@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1685064470812.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "2E18C710",
+    "lastKnownWriteTime" : 732242039791773480,
+    "last_content_update" : 1685064470812,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "9651D1B1",
+        "caption" : "singeo",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=singeo&cache_key=9651D1B1",
+        "displayedObservations" : 22711,
+        "environment" : "",
+        "object" : "singeo",
+        "preview" : 0,
+        "totalObservations" : 22711,
+        "variables" : 22
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

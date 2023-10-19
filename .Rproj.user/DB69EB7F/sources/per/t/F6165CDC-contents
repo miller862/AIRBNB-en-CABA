@@ -1,0 +1,204 @@
+install.packages('geojson')
+install.packages('ggrepel')
+library(stargazer)
+library(treemapify)
+library(ggplot2)
+library(eeptools)
+library(tidyverse)
+library(stringr)
+library(sf)
+library(geojson)
+library(rgdal)
+library(dplyr)
+library(geoAr)
+library(ggmap)
+library(ggrepel)
+
+#Primero tomamos prestado un poco del codigo de la clase 7
+
+options(scipen = 999)
+
+
+df_barrios <- st_read("https://cdn.buenosaires.gob.ar/datosabiertos/datasets/ministerio-de-educacion/barrios/barrios.geojson")%>%
+st_transform(crs = 4326) #transformo el sistema de coordenadas 
+
+st_crs(df_barrios) #chequeo el sistema de coords
+
+
+
+df_airbnb <- read.csv("./data/listings.csv", 
+sep = ",", #Defino el separador de las columnas
+encoding = "UTF-8") #El encoding de las letras
+
+
+df_airbnb2 <- st_as_sf(df_airbnb, 
+coords = c("longitude", "latitude"), 
+crs = 4326) #transformo el objeto y el sistema de coords
+st_crs(df_airbnb2) #chequeo el sistema de coords
+
+rm(df_airbnb)
+
+df_airbnb2_barrios <- st_join(df_airbnb2, df_barrios)
+
+
+df_airbnb2_barrios <- df_airbnb2_barrios %>%
+clean_names() %>% #de janitor Pone todos los nombres en minuscula, elimina espacios etc.
+mutate(last_review = ymd(last_review)) %>% # con la función "ymd" formateo las fechas y le digo a r como leerla
+mutate(comuna = as.factor(comuna)) #Le decimos a R que el número de columna es una categorización y no un número
+
+#empezamos
+
+propietarios <- df_airbnb %>% 
+  select(host_id,host_name) %>% 
+  group_by(host_id,host_name) %>% 
+  summarise(cantidad= n(),.groups = 'drop') %>% 
+  arrange(-cantidad) %>% 
+  as.data.frame()
+
+'''
+rm(headpropietarios)
+headpropietarios <-(head(propietarios,20))
+
+stargazer(headpropietarios,                 # Export txt
+          summary = FALSE,
+          type = "text",
+          out = "data_stargazer_txt.txt")
+'''
+####limpiando algun outliaer y emprolijando la tabla y nombre de variables####
+
+#calculamos el precio promedio por barrio
+precio_x_barrio<-df_airbnb2_barrios %>% 
+  group_by(neighbourhood) %>% 
+  summarise(precio_promedio = mean(price),.groups = 'drop') %>% 
+  arrange(-precio_promedio)
+
+#nos hace ruido coghlan asi que lo inspeccionamos
+COGHLAN <- df_airbnb2 %>% 
+  filter(neighbourhood=='Coghlan') %>% 
+  arrange(-price)
+
+#eliminamos un gran outlier y ordenamos por precio, y le ponemos el nombre final que va a tener la tabla con todos los datos
+AIRBNB_TODO<-df_airbnb2_barrios %>%  
+  arrange(-price) %>% 
+  .[-c(1), ]
+
+rm(df_airbnb2_barrios)
+
+#Que pasa con la comuna 4?
+
+AIRBNB_TODO %>% 
+  filter(comuna=='4') %>% 
+  arrange(-price) %>% 
+  view(.)
+ 
+#Borramos el unico departamento que se ofertaba a 2 millones la noche
+AIRBNB_TODO<- AIRBNB_TODO [! grepl ('7801998', AIRBNB_TODO$id),] 
+
+
+####Generando las primeras tablas ####
+
+#volvemos a calcular el PRECIO PROMEDIO POR BARRIO sin el outlier y en base a nuestra nueva tabla
+precio_x_barrio<-AIRBNB_TODO %>% 
+  group_by(neighbourhood) %>% 
+  summarise(precio_promedio = mean(price),.groups = 'drop') %>% 
+  arrange(-precio_promedio)
+
+#PRECIO PROMEDIO POR COMUNA
+precio_x_comuna<-AIRBNB_TODO %>% 
+  group_by(comuna) %>% 
+  summarise(precio_promedio = mean(price),.groups = 'drop') %>% 
+  arrange(-precio_promedio)
+
+#CANTIDAD DE AIRBN POR BARRIO
+cantidad_x_barrio<-AIRBNB_TODO %>% 
+  group_by(neighbourhood) %>% 
+  summarise(cantidad= n(),.groups = 'drop') %>% 
+  arrange(-cantidad)
+
+#cANTIDAD DE AIRBNB POR COMUNA
+cantidad_x_comuna<-AIRBNB_TODO %>% 
+  group_by(comuna) %>% 
+  summarise(cantidad= n(),.groups = 'drop') %>% 
+  arrange(-cantidad)
+
+##generamos unas vistas de nuestra data deglosada por tipo de habitacion
+#precio promedio por tipo
+
+AIRBNB_TODO %>% 
+  group_by(room_type) %>% 
+  summarise(precio_promedio = mean(price))#%>% 
+  view(.)
+#cantitad por tipo
+  AIRBNB_TODO %>% 
+    group_by(room_type) %>% 
+    summarise(cantidad= n(),.groups = 'drop')#%>% 
+  view(.)
+  
+#CANTIDAD DE AIRBN POR BARRIO DESGLOSADO
+tipo_x_barrio<-AIRBNB_TODO %>% 
+  group_by(neighbourhood,room_type) %>% 
+  summarise(cantidad= n(),.groups = 'drop') %>% 
+  arrange(neighbourhood)
+
+#cANTIDAD DE AIRBNB POR COMUNA DESGLOSADO
+tipo_x_comuna<-AIRBNB_TODO %>% 
+  group_by(comuna,room_type) %>% 
+  summarise(cantidad= n(),.groups = 'drop') %>% 
+  arrange(comuna)
+
+
+plot1_cantidad_x_comuna <- ggplot(tipo_x_comuna,
+                                  aes(x = reorder(comuna, cantidad), #le decimos que reordene una columna según los valores de otra 
+                                      y = cantidad,
+                                      fill = room_type)) + #relleno de acuerdo a una columna
+  geom_bar(stat = "identity", 
+           position = "stack") + #stak apiladas
+  coord_flip() + #cambiamos coordenadas (la x en vertical por ejemplo)
+  labs(title = "Oferta por tipo y comuna")
+
+'''
+A fines de nuestro trabajo, resulta pertinente trabajar solo con el tipo: Entire home/apt
+que representa un departamento que podria utilizarse por un residente de la ciudad de Buenos Aires.
+A su vez genramos una tabla con las habitaciones de hotel, en la que no profundizaremos por el momento
+'''
+
+AIRBNB_FILTRADO<-AIRBNB_TODO%>%
+  filter(room_type=="Entire home/apt")
+
+hotelrooms<-AIRBNB_TODO%>%
+  filter(room_type=="Hotel room")
+
+#voy a generar versiones filradas de las tablas que ya tenia, donde solo me quedo con la categoria Entire Home/apt
+
+Fprecio_x_barrio<-AIRBNB_FILTRADO %>% #resulta gracioso el unico departamento entero publicado en villa lugano a 30mil la noche 'ideal extranjeros'
+  group_by(neighbourhood) %>% 
+  summarise(precio_promedio = mean(price),.groups = 'drop') %>% 
+  arrange(-precio_promedio)
+
+
+Fprecio_x_comuna<-AIRBNB_FILTRADO %>% 
+  group_by(comuna) %>% 
+  summarise(precio_promedio = mean(price),.groups = 'drop') %>% 
+  arrange(-precio_promedio)
+
+
+Fcantidad_x_barrio<-AIRBNB_FILTRADO %>% 
+  group_by(neighbourhood) %>% 
+  summarise(cantidad= n(),.groups = 'drop') %>% 
+  arrange(-cantidad)
+
+
+Fcantidad_x_comuna<-AIRBNB_FILTRADO %>% 
+  group_by(comuna) %>% 
+  summarise(cantidad= n(),.groups = 'drop') %>% 
+  arrange(-cantidad)
+
+####PLOTEOS, DESDE ACA LAS DUDAS####
+
+
+
+ggplot() +
+  geom_sf(data = df_barrios) + 
+  geom_sf(data = AIRBNB_TODO)
+
+
