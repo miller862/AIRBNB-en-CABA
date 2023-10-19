@@ -17,9 +17,9 @@ library(lubridate)
 ####PRIMERA PARTE: GENERAR DATOS DE PRECIOS DE ALQUILER PROMEDIO MENSUALES EN CABA:
 
 #importar las bases de datos
-CABA_PROMEDIOS_1_AMBIENTE_BARRIO <- read_excel("data/CABA_PROMEDIOS_1_AMBIENTE_BARRIO.xlsx")
-CABA_PROMEDIOS_2_AMBIENTE_BARRIO <- read_excel("data/CABA_PROMEDIOS_2_AMBIENTE_BARRIO.xlsx")
-CABA_PROMEDIOS_3_AMBIENTE_BARRIO <- read_excel("data/CABA_PROMEDIOS_3_AMBIENTE_BARRIO.xlsx")
+CABA_PROMEDIOS_1_AMBIENTE_BARRIO <- read_excel("../data/CABA_PROMEDIOS_1_AMBIENTE_BARRIO.xlsx")
+CABA_PROMEDIOS_2_AMBIENTE_BARRIO <- read_excel("../data/CABA_PROMEDIOS_2_AMBIENTE_BARRIO.xlsx")
+CABA_PROMEDIOS_3_AMBIENTE_BARRIO <- read_excel("../data/CABA_PROMEDIOS_3_AMBIENTE_BARRIO.xlsx")
 
 #cambiar el nombre
 df_promedios_x_BARRIO_1_ambiente <- CABA_PROMEDIOS_1_AMBIENTE_BARRIO
@@ -90,7 +90,7 @@ palercaba <- df_promedio[c(4,6), ] %>%
   rename("neighbourhood"="BARRIO")
 
 
-write.csv(alquileres_promedio_palercaba, "data/palercaba.csv")
+write.csv(alquileres_promedio_palercaba, "../data/palercaba.csv")
 
 ###RESULTADO### OBTUVIMOS ´PALERCABA´ PARA SEGUIRLO TRABAJANDO EN EL SCRIPT PRINCIPAL
 
@@ -100,9 +100,9 @@ rm(df_promedios_x_BARRIO_2023_limpia,df_promedios_x_BARRIO_2023,df_ordenado)
 #EVOLUCION DEL SALARIO MINIMO VS VALORES DE ALQUILER
 
 
-CABA_PROMEDIOS_1_AMBIENTE_BARRIO <- read_excel("data/CABA_PROMEDIOS_1_AMBIENTE_BARRIO.xlsx")
-CABA_PROMEDIOS_2_AMBIENTE_BARRIO <- read_excel("data/CABA_PROMEDIOS_2_AMBIENTE_BARRIO.xlsx")
-CABA_PROMEDIOS_3_AMBIENTE_BARRIO <- read_excel("data/CABA_PROMEDIOS_3_AMBIENTE_BARRIO.xlsx")
+CABA_PROMEDIOS_1_AMBIENTE_BARRIO <- read_excel("../data/CABA_PROMEDIOS_1_AMBIENTE_BARRIO.xlsx")
+CABA_PROMEDIOS_2_AMBIENTE_BARRIO <- read_excel("../data/CABA_PROMEDIOS_2_AMBIENTE_BARRIO.xlsx")
+CABA_PROMEDIOS_3_AMBIENTE_BARRIO <- read_excel("../data/CABA_PROMEDIOS_3_AMBIENTE_BARRIO.xlsx")
 
 #cambiar el nombre
 df_promedios_x_barrio_1_ambiente <- CABA_PROMEDIOS_1_AMBIENTE_BARRIO
@@ -910,7 +910,7 @@ EVOLUCION_PROMEDIOS_3_AMBIENTE_con_fecha$Valor_promedio <- as.numeric(EVOLUCION_
 #-----------------------#
 #EVOLUCION DEL SALARIO MINIMO VITAL Y MOVIL
 
-salario_minimo_1988 <- read_csv("data/indice-salario-minimo-vital-movil-valores-mensuales-pesos-corrientes-desde-1988.csv")
+salario_minimo_1988 <- read_csv("../data/indice-salario-minimo-vital-movil-valores-mensuales-pesos-corrientes-desde-1988.csv")
 #View(salario_minimo_1988)
 #no hicieron falta las aclaraciones de "sep =',', encoding = 'UTF-8'"
 
@@ -952,5 +952,5 @@ SALARIO_VS_ALQUILER <- ggplot() +
 
 SALARIO_VS_ALQUILER
 
-ggsave(plot = SALARIO_VS_ALQUILER, filename = "output/SALARIO_VS_ALQUILER.png", 
+ggsave(plot = SALARIO_VS_ALQUILER, filename = "../output/SALARIO_VS_ALQUILER.png", 
         width = 30, height = 20, units = "cm")

@@ -14,7 +14,7 @@ library(sf)
 library(readxl)
 
 #cargamos la encuesta
-encuesta <-read_excel("./data/EncuestaLab.xlsx",sheet =1, col_names= TRUE)
+encuesta <-read_excel("../data/EncuestaLab.xlsx",sheet =1, col_names= TRUE)
 
 #mejoramos los nombres de las columnas
 encuesta<- encuesta %>% 
